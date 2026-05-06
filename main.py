@@ -1,6 +1,10 @@
+from datetime import date
+from io import BytesIO
+from PyPDF2 import PdfReader
+
 from requests import request
 
-def get_bulls(billa=True, spar=True, lidl=True):
+def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     good_bulls = {"billa": [], "spar": [], "lidl": []}
 
@@ -71,7 +75,38 @@ def get_bulls(billa=True, spar=True, lidl=True):
                     "condition": None
                 })
 
+# NOT FINISHED YET
+    if adeg:
+        # Fakker see und WINKLER sind aktiv
+        # ARRIACH LIM is NV
+        currKW = date.today().isocalendar()[1]
+        locations = ["Aktiv", "NV", ]
+
+
+        for location in locations:
+            adeg = f"https://www.adeg.at/fileadmin/user_upload/{location}_Stamm_ADEG_FB_KW{currKW}.pdf"
+            res = request("GET", adeg.replace("{location}", location), headers=headers)
+            print(f"adeg {location}: " + str(res.status_code))
+            if res.status_code != 200:
+                print(f"Keine PDF für {location} gefunden, überspringe...")
+                break
+            
+            pdf = res.content
+            text = get_pdf_text(pdf)
+            print(text)
+
+
+
     return good_bulls
+
+
+def get_pdf_text(pdf):
+    reader = PdfReader(BytesIO(pdf))
+    text = ""
+    for page in reader.pages:
+        text += page.extract_text()
+    
+    return text
 
 def print_bulls(bulls):
     for key in bulls.keys():
