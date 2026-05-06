@@ -1,9 +1,10 @@
-from starlette.applications import Starlette
-from starlette.routing import Route
-from starlette.templating import Jinja2Templates
-from starlette.responses import Response
-from requests import request
 from apscheduler.schedulers.background import BackgroundScheduler
+from starlette.templating import Jinja2Templates
+from starlette.applications import Starlette
+from starlette.responses import Response
+from starlette.routing import Route
+from requests import request
+from statistics import mode
 
 BULLS = {}
 
@@ -67,24 +68,51 @@ def get_bulls(billa=True, spar=True, lidl=True):
                 #lidlplus aktion
                 good_bulls["lidl"].append({
                     "name": bull["gridbox"]["data"]["fullTitle"],
-                    "newPrice": bull["gridbox"]["data"]["lidlPlus"][0]["price"]["price"] * 100,
-                    "oldPrice": bull["gridbox"]["data"]["lidlPlus"][0]["price"]["oldPrice"] * 100,
+                    "newPrice": int(bull["gridbox"]["data"]["lidlPlus"][0]["price"]["price"] * 100),
+                    "oldPrice": int(bull["gridbox"]["data"]["lidlPlus"][0]["price"]["oldPrice"] * 100),
                     "condition": bull["gridbox"]["data"]["lidlPlus"][0]["lidlPlusText"]
                 })
             elif "oldprice" in bull["gridbox"]["data"]["price"]:
                 #normale aktion
                 good_bulls["lidl"].append({
                     "name": bull["gridbox"]["data"]["fullTitle"],
-                    "newPrice": bull["gridbox"]["data"]["price"]["price"] * 100,
-                    "oldPrice": bull["gridbox"]["data"]["price"]["oldPrice"] * 100,
+                    "newPrice": int(bull["gridbox"]["data"]["price"]["price"] * 100),
+                    "oldPrice": int(bull["gridbox"]["data"]["price"]["oldPrice"] * 100),
                     "condition": None
                 })
 
+    real_good_bulls = {}
+    for shop, bulls in good_bulls.items():
+        if not bulls:
+            real_good_bulls[shop] = []
+            continue
+
+        data = {"nP": [], "oP": [], "cond": []}
+        for bull in bulls:
+            data["nP"].append(bull["newPrice"])
+            data["oP"].append(bull["oldPrice"])
+            data["cond"].append(bull["condition"])
+
+        modes = {"nP": mode(data["nP"]), "oP": mode(data["oP"]), "cond": mode(data["cond"])}
+
+        uni_bulls = []
+        for bull in bulls:
+            if bull["newPrice"] == modes["nP"] and bull["oldPrice"] == modes["oP"] and bull["condition"].split(" ")[:-1] == modes["cond"].split(" ")[:-1]:
+                u_bull = bull.copy()
+                u_bull["name"] = "Red Bull Editions"
+                u_bull["condition"] = modes["cond"]
+                uni_bulls.append(u_bull)
+            else:
+                uni_bulls.append(bull)
+
+        real_good_bulls[shop] = [dict(t) for t in {tuple(d.items()) for d in uni_bulls}]
+
     print("done")
     global BULLS
-    BULLS = good_bulls
+    BULLS = real_good_bulls
 
 async def home(request):
+    print(BULLS)
     return templates.TemplateResponse(request, "index.html")
 
 get_bulls()
