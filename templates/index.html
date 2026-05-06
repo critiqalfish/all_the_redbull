@@ -4,11 +4,22 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>All the Red Bull</title>
-        <style>
-            
-        </style>
+        <link rel="stylesheet" href="static/styles.css">
     </head>
     <body>
-        
+        <header>
+            <p>All the Red Bull</p>
+            <p id="timestamp">{{ ts }}</p>
+        </header>
+        <main>
+            {% for shop, bulls in good_bulls.items() %}
+                {{ shop }} > {{ bulls }}
+            {% endfor %}
+        </main>
+        <script>
+            ts = document.getElementById("timestamp").innerText;
+            date = new Date(ts * 1000);
+            document.getElementById("timestamp").innerText = "last update: " + date.getHours() + ':' + ("0" + date.getMinutes()).substr(-2);
+        </script>
     </body>
 </html>

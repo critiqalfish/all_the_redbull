@@ -1,0 +1,50 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: "Futura";
+}
+
+@font-face {
+    font-family: "Futura";
+    src: url("OPTIFuturaDemiBold.otf");
+    font-style: normal;
+}
+
+html {
+    width: 100vw;
+    height: 100vh;
+}
+
+body {
+    width: 100vw;
+    height: 100vh;
+}
+
+header {
+    display: flex;
+    width: 100vw;
+    height: 10vh;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1vw;
+    background-color: rgb(255, 0, 111);
+}
+
+header p:nth-child(1) {
+    font-size: 8vh;
+    color: rgb(149, 205, 255);
+}
+
+header p:nth-child(2) {
+    font-size: 4vh;
+    color: rgb(149, 205, 255);
+}
+
+main {
+    display: flex;
+    width: 100vw;
+    height: 90vh;
+    flex-direction: column;
+}
