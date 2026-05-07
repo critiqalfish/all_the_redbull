@@ -254,7 +254,7 @@ def print_bulls(bulls):
     for key in bulls.keys():
         print(key.upper() + ":")
         for bull in bulls[key]:
-            print(f"\t- {bull["name"]} {" " * (45 - len(bull["name"]))}| {int(bull["newPrice"]) / 100} < {int(bull["oldPrice"]) / 100} ? {bull["condition"]}")
+            print(f"\t- {bull['name']} {' ' * (45 - len(bull['name']))}| {int(bull['newPrice']) / 100} < {int(bull['oldPrice']) / 100} ? {bull['condition']}")
 
 if __name__ == "__main__":
     print_bulls(get_bulls())
