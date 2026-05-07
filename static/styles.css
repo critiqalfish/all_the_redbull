@@ -62,7 +62,7 @@ main {
     display: flex;
     width: calc(22.75vw - 4px);
     flex-direction: column;
-    height: 20vh;
+    height: 25vh;
     background-color: rgb(189, 224, 255);
     border: 2px solid rgb(255, 0, 111);
     border-radius: 8px;

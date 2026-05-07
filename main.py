@@ -2,7 +2,6 @@ import re
 from datetime import date
 from io import BytesIO
 from PyPDF2 import PdfReader
-
 from requests import request
 
 
@@ -211,4 +210,4 @@ def print_bulls(bulls):
 
 
 if __name__ == "__main__":
-    print_bulls(get_bulls())
+    print_bulls(get_bulls(False, False, False, True))
