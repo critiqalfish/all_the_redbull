@@ -33,18 +33,86 @@ header {
 }
 
 header p:nth-child(1) {
-    font-size: 8vh;
+    font-size: 4em;
     color: rgb(149, 205, 255);
 }
 
 header p:nth-child(2) {
-    font-size: 4vh;
+    font-size: 2em;
     color: rgb(149, 205, 255);
+}
+
+header p:nth-child(2) span {
+    text-shadow: 0 0 8px rgba(149, 205, 255, 0.808);
 }
 
 main {
     display: flex;
     width: 100vw;
     height: 90vh;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    padding: 3vh 2vw 3vw 3vw;
+    gap: 1vw;
+    overflow-x: hidden;
+}
+
+.card {
+    display: flex;
+    width: calc(22.75vw - 4px);
     flex-direction: column;
+    height: 20vh;
+    background-color: rgb(189, 224, 255);
+    border: 2px solid rgb(255, 0, 111);
+    border-radius: 8px;
+    padding: 1vh 1vw;
+}
+
+.card .shop {
+    font-size: 2.5em;
+    text-transform: uppercase;
+    text-shadow: 0 0 8px #0000009a;
+}
+
+.card .shop.billa {
+    color: #ffd300;
+}
+
+.card .shop.spar {
+    color: #e40513;
+}
+
+.card .shop.lidl {
+    color: #0050aa;
+}
+
+.card .name {
+    font-size: 1.8em;
+}
+
+.card .row {
+    display: flex;
+    width: 100%;
+    flex-direction: row;
+    align-items: baseline;
+    margin-top: auto;
+}
+
+.card .condition {
+    font-size: 1.5em;
+}
+
+.card .price {
+    font-size: 1.8em;
+    margin-left: auto;
+}
+
+.card .price .old {
+    margin-right: 0.5vw;
+    color: rgb(121, 121, 121);
+}
+
+.card .price .new {
+    color: rgb(255, 0, 111);
 }

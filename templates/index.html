@@ -13,13 +13,25 @@
         </header>
         <main>
             {% for shop, bulls in good_bulls.items() %}
-                {{ shop }} > {{ bulls }}
+                {% for bull in bulls %}
+                    <div class="card">
+                        <p class="shop {{ shop }}">{{ shop }}</p>
+                        <p class="name">{{ bull.name }}</p>
+                        <div class="row">
+                            <p class="condition">{{ bull.condition }}</p>
+                            <p class="price">
+                                <span class="old"><s>{{ bull.oldPrice / 100 }}</s></span>
+                                <span class="new"><b>{{ bull.newPrice / 100 }} €</b></span>
+                            </p>
+                        </div>
+                    </div>
+                {% endfor %}
             {% endfor %}
         </main>
         <script>
             ts = document.getElementById("timestamp").innerText;
             date = new Date(ts * 1000);
-            document.getElementById("timestamp").innerText = "last update: " + date.getHours() + ':' + ("0" + date.getMinutes()).substr(-2);
+            document.getElementById("timestamp").innerHTML = "last update: " + "<span>" + date.getHours() + ':' + ("0" + date.getMinutes()).substr(-2) + "</span>";
         </script>
     </body>
 </html>
