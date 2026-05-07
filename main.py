@@ -1,12 +1,15 @@
+import re
 from datetime import date
 from io import BytesIO
 from PyPDF2 import PdfReader
 
 from requests import request
 
-def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    good_bulls = {"billa": [], "spar": [], "lidl": []}
+
+def get_bulls(billa=True, spar=True, lidl=True, adeg=True):
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}    
+    good_bulls = {"billa": [], "spar": [], "lidl": [], "adeg": []}
+    ADEG_UVP = 159
 
     if billa:
         billa = "https://shop.billa.at/api/product-discovery/products/search/red-bull?pageSize=50&sortBy=relevance&countriesOfOriginList=Österreich&categoryNavigation=categories.0:Getränke"
@@ -23,7 +26,7 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                         "oldPrice": bull["price"]["regular"]["promotionValue"],
                         "condition": bull["price"]["regular"]["promotionText"]
                     })
-    
+
     if spar:
         spar = "https://bfs-geo.spar-ics.com/fact-finder/rest/v5/search/products_at?query=red-bull&hitsPerPage=10&useAsn=false&marketId=NATIONAL&page="
         page = 1
@@ -75,27 +78,42 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                     "condition": None
                 })
 
-# NOT FINISHED YET
     if adeg:
-        # Fakker see und WINKLER sind aktiv
-        # ARRIACH LIM is NV
         currKW = date.today().isocalendar()[1]
-        locations = ["Aktiv", "NV", ]
-
+        print(f"adeg KW{currKW}:")
+        locations = ["Aktiv", "NV"]
 
         for location in locations:
-            adeg = f"https://www.adeg.at/fileadmin/user_upload/{location}_Stamm_ADEG_FB_KW{currKW}.pdf"
-            res = request("GET", adeg.replace("{location}", location), headers=headers)
-            print(f"adeg {location}: " + str(res.status_code))
-            if res.status_code != 200:
-                print(f"Keine PDF für {location} gefunden, überspringe...")
-                break
-            
-            pdf = res.content
+            pdf = None
+            found_kw = None
+            for kw_offset in range(3):
+                kw = currKW - kw_offset
+                url = f"https://www.adeg.at/fileadmin/user_upload/{location}_Stamm_ADEG_FB_KW{kw}.pdf"
+                res = request("GET", url, headers=headers)
+                if res.status_code == 200:
+                    pdf = res.content
+                    found_kw = kw
+                    break
+
+            if pdf is None:
+                print(f"  {location}: keine PDF gefunden (KW{currKW}-KW{currKW - 2})")
+                continue
+
             text = get_pdf_text(pdf)
-            print(text)
+            bulls = parse_adeg_text(text, location, found_kw)
 
+            if not bulls:
+                bulls.append(
+                    {
+                        "name": "Red Bull",
+                        "newPrice": ADEG_UVP,
+                        "oldPrice": ADEG_UVP,
+                        "condition": f"ADEG {location} KW{found_kw} (UVP)",
+                    }
+                )
 
+            print(f"  {location} KW{found_kw}: 200")
+            good_bulls["adeg"].extend(bulls)
 
     return good_bulls
 
@@ -105,14 +123,92 @@ def get_pdf_text(pdf):
     text = ""
     for page in reader.pages:
         text += page.extract_text()
-    
+
     return text
+
+
+def parse_adeg_text(text, location, kw):
+    bulls = []
+    lines = [l.strip() for l in text.split("\n") if l.strip()]
+
+    for i, line in enumerate(lines):
+        if "red bull" not in line.lower():
+            continue
+
+        first_line = re.sub(r"^.*?(?=Red Bull)", "", line, flags=re.IGNORECASE)
+        name_parts = [first_line]
+        desc_end = i
+        for j in range(i + 1, min(len(lines), i + 8)):
+            next_line = lines[j]
+            if re.match(r"^(ab\s+\d+\s+Stück|1\s*(Liter|kg))", next_line):
+                break
+            name_parts.append(next_line)
+            desc_end = j
+
+        name = " ".join(name_parts).strip()
+        name = re.sub(r"([a-zA-Z])(\d)", r"\1 \2", name)
+        new_price = None
+        old_price = None
+        condition = f"ADEG {location} KW{kw}"
+
+        context = lines[desc_end + 1 : min(len(lines), i + 15)]
+
+        for idx, ctx in enumerate(context):
+            if condition == f"ADEG {location}":
+                cond_match = re.match(r"^ab\s+(\d+\s+Stück)\s*(je)?.*", ctx)
+                if cond_match:
+                    condition = cond_match.group(1)
+
+            if old_price is None and "statt" in ctx.lower():
+                statt_match = re.search(
+                    r"(\d+[.,]\d{2})\s*Statt\s*(\d+[.,]\d{2})", ctx, re.IGNORECASE
+                )
+                if statt_match:
+                    old_price = int(float(statt_match.group(2).replace(",", ".")) * 100)
+
+            if ctx.startswith("ADEG UVP*"):
+                if condition == f"ADEG {location}":
+                    mult_match = re.search(r"ab\s+(\d+)\s+Stück", ctx)
+                    if mult_match:
+                        condition = f"ab {mult_match.group(1)} Stück"
+                for m in re.findall(r"(\d+[.,]\d{2})", ctx):
+                    old_price = int(float(m.replace(",", ".")) * 100)
+                if old_price is None and idx + 1 < len(context):
+                    next_ctx = context[idx + 1]
+                    for m in re.findall(r"(\d+[.,]\d{2})", next_ctx):
+                        old_price = int(float(m.replace(",", ".")) * 100)
+                        break
+
+            if (
+                new_price is None
+                and "Liter" not in ctx
+                and "kg" not in ctx
+                and not ctx.startswith("ADEG UVP")
+            ):
+                price_match = re.match(r"^(\d+[.,]\d{2})", ctx)
+                if price_match:
+                    new_price = int(float(price_match.group(1).replace(",", ".")) * 100)
+
+        if new_price is not None:
+            bulls.append(
+                {
+                    "name": name,
+                    "newPrice": new_price,
+                    "oldPrice": old_price,
+                    "condition": condition,
+                }
+            )
+
+    return bulls
+
 
 def print_bulls(bulls):
     for key in bulls.keys():
         print(key.upper() + ":")
         for bull in bulls[key]:
             print(f"\t- {bull["name"]} {" " * (45 - len(bull["name"]))}| {int(bull["newPrice"]) / 100} < {int(bull["oldPrice"]) / 100} ? {bull["condition"]}")
+
+
 
 if __name__ == "__main__":
     print_bulls(get_bulls())
