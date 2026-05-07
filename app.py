@@ -25,7 +25,7 @@ async def home(request):
 
 get_bulls()
 scheduler = BackgroundScheduler()
-scheduler.add_job(get_bulls, "interval", hours=1)
+scheduler.add_job(get_bulls, "interval", minutes=41)
 scheduler.start()
 
 routes = [
