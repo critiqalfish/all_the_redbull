@@ -116,3 +116,25 @@ main {
 .card .price .new {
     color: rgb(255, 0, 111);
 }
+
+@media only screen and (max-width: 768px) {
+    header {
+        padding: 0 2vw;
+    }
+
+    header p:nth-child(1) {
+        font-size: 2em;
+    }
+    
+    header p:nth-child(2) {
+        font-size: 1.5em;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+    }
+
+    .card {
+        width: 94vw;
+        padding: 1vh 3vw;
+    }
+}
