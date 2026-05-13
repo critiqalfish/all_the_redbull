@@ -3,6 +3,7 @@ from PyPDF2 import PdfReader
 from statistics import mode
 from datetime import date
 from io import BytesIO
+import traceback
 import re
 
 def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
@@ -25,8 +26,8 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                             "oldPrice": bull["price"]["regular"]["promotionValue"],
                             "condition": bull["price"]["regular"]["promotionText"]
                         })
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
     
     try:
         if spar:
@@ -55,8 +56,8 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                         })
 
                 page += 1
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
 
     try:
         if lidl:
@@ -82,8 +83,8 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                         "oldPrice": int(bull["gridbox"]["data"]["price"]["oldPrice"] * 100),
                         "condition": None
                     })
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
 
     try:
         ADEG_UVP = 159
@@ -123,8 +124,8 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
 
                 print(f"  {location} KW{found_kw}: 200")
                 good_bulls["adeg"].extend(bulls)
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
 
     real_good_bulls = {}
     try:
@@ -161,8 +162,8 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
                     uni_bulls.append(bull)
 
             real_good_bulls[shop] = [dict(t) for t in {tuple(d.items()) for d in uni_bulls}]
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
 
     print("done")
     return real_good_bulls
