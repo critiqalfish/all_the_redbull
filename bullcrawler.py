@@ -63,10 +63,12 @@ def get_bulls(billa=True, spar=True, lidl=True, adeg=False):
         if lidl:
             lidl = "https://www.lidl.at/q/api/search?q=red-bull&category=Essen+%26+Trinken%2FGetr%C3%A4nke&fetchsize=48&locale=de_AT&assortment=AT&offset=0&version=2.1.0"
             res = request("GET", lidl, headers=headers)
-            bulls = res.json()["items"]
+            bulls = res.json()
             print("lidl: " + str(res.status_code))
+            if "items" not in bulls:
+                bulls["items"] = []
 
-            for bull in bulls:
+            for bull in bulls["items"]:
                 if "price" not in bull["gridbox"]["data"]["price"]:
                     #lidlplus aktion
                     good_bulls["lidl"].append({
